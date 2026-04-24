@@ -1,0 +1,30 @@
+{
+  "name": "collective-purchase-backend",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/fallenskyyy/collective-purchase-backend#readme",
+  "bugs": {
+    "url": "https://github.com/fallenskyyy/collective-purchase-backend/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fallenskyyy/collective-purchase-backend.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "dev": " node src/index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.103.3",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "pg": "^8.20.0"
+  }
+}
