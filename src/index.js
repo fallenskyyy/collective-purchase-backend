@@ -86,8 +86,8 @@ app.post("/auth/register", async (req, res) => {
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: false,
-      sameSite: "strict",
+      secure: true,
+      sameSite: "none",
       maxAge: 30 * 24 * 60 * 60 * 1000,
     });
 
@@ -136,8 +136,8 @@ app.post("/auth/login", async (req, res) => {
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: false, 
-      sameSite: "strict",
+      secure: true, 
+      sameSite: "none",
       maxAge: 30 * 24 * 60 * 60 * 1000, 
     });
 
