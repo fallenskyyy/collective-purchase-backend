@@ -307,43 +307,50 @@ app.post("/api/group-purchases/:offerId/join", authenticate, async (req, res) =>
 
 app.get("/api/products/:id", async (req, res) => {
   try {
-    const { id } = req.params;
+    const { offerId } = req.params;
     
-    const { data: product, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('id', id)
+    const { data: groupOffer, error } = await supabase
+      .from('group_offers')
+      .select(`
+        *,
+        product:products(*)
+      `)
+      .eq('id', offerId)
       .single();
     
     if (error) {
       if (error.code === 'PGRST116') {
-        return res.status(404).json({ message: "Product not found" });
+        return res.status(404).json({ message: "Group purchase not found" });
       }
       throw error;
     }
     
-    const { data: groupOffers, error: offersError } = await supabase
-      .from('group_offers')
-      .select(`
-        id,
-        current_participants,
-        required_participants
-      `)
-      .eq('product_id', id)
-      .order('created_at', { ascending: false })
-      .limit(1);
+    let userJoined = false;
+    const token = req.cookies.accessToken;
     
-    if (offersError) throw offersError;
+    if (token && groupOffer) {
+      try {
+        const payload = jwt.verify(token, process.env.JWT_SECRET);
+        const { data: participation } = await supabase
+          .from('group_participants')
+          .select('id')
+          .eq('group_offer_id', offerId)
+          .eq('user_id', payload.id)
+          .maybeSingle();
+        
+        userJoined = !!participation;
+      } catch (error) {
+        console.log('No valid token');
+      }
+    }
     
-    const response = {
-      ...product,
-      group_offer: groupOffers && groupOffers.length > 0 ? groupOffers[0] : null
-    };
-    
-    res.json(response);
+    res.json({
+      ...groupOffer,
+      user_joined: userJoined
+    });
     
   } catch (error) {
-    console.error('Error fetching product:', error);
+    console.error('Error fetching group purchase:', error);
     res.status(500).json({ message: error.message });
   }
 });
