@@ -258,7 +258,6 @@ app.post("/api/group-purchases/:offerId/join", authenticate, async (req, res) =>
       .from('group_offers')
       .update({ current_participants: newCount })
       .eq('id', numericOfferId)
-      .eq('current_participants', currentParticipants);
     
     if (updateError) {
       console.error('Update error:', updateError);
