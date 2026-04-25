@@ -136,9 +136,20 @@ app.post("/auth/login", async (req, res) => {
 
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: true, 
+      secure: true,          
+      sameSite: "none",       
+      maxAge: 15 * 60 * 1000, 
+      path: '/',
+      domain: undefined 
+    });
+
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: true,
       sameSite: "none",
-      maxAge: 30 * 24 * 60 * 60 * 1000, 
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      path: '/',
+      domain: undefined
     });
 
     return res.json({
