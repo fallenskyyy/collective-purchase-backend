@@ -307,7 +307,7 @@ app.post("/api/group-purchases/:offerId/join", authenticate, async (req, res) =>
 
 app.get("/api/products/:id", async (req, res) => {
   try {
-    const { offerId } = req.params;
+    const { id } = req.params;
     
     const { data: groupOffer, error } = await supabase
       .from('group_offers')
@@ -315,7 +315,7 @@ app.get("/api/products/:id", async (req, res) => {
         *,
         product:products(*)
       `)
-      .eq('id', offerId)
+      .eq('id', id)
       .single();
     
     if (error) {
@@ -334,7 +334,7 @@ app.get("/api/products/:id", async (req, res) => {
         const { data: participation } = await supabase
           .from('group_participants')
           .select('id')
-          .eq('group_offer_id', offerId)
+          .eq('group_offer_id', id)
           .eq('user_id', payload.id)
           .maybeSingle();
         
