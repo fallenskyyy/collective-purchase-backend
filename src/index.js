@@ -223,48 +223,52 @@ app.post("/api/group-purchases/:offerId/join", authenticate, async (req, res) =>
   try {
     const { offerId } = req.params;
     const userId = req.user?.id;
+    const numericOfferId = parseInt(offerId, 10);
 
     const { data: offer, error: offerError } = await supabase
       .from('group_offers')
       .select('*')
-      .eq('id', offerId)
+      .eq('id', numericOfferId)
       .single();
     
-    
-    if (offerError) {
-      console.error('Offer error:', offerError);
-      if (offerError.code === 'PGRST116') {
-        return res.status(404).json({ message: "Group purchase not found" });
-      }
-      throw offerError;
-    }
-    
-    if (!offer) {
+    if (offerError || !offer) {
       return res.status(404).json({ message: "Group purchase not found" });
     }
 
-    const currentParticipants = offer.current_participants;
+    const currentParticipants = offer.current_participants || 0;
     const maxParticipants = offer.required_participants;
     
     if (currentParticipants >= maxParticipants) {
       return res.status(400).json({ message: "Group is full" });
     }
 
-    const { data: existing, error: checkError } = await supabase
+    const { data: existing } = await supabase
       .from('group_participants')
       .select('id')
-      .eq('group_offer_id', offerId)
+      .eq('group_offer_id', numericOfferId)
       .eq('user_id', userId)
       .maybeSingle();
-        
+    
     if (existing) {
       return res.status(400).json({ message: "You have already joined this group purchase" });
+    }
+
+    const newCount = currentParticipants + 1;
+    const { error: updateError } = await supabase
+      .from('group_offers')
+      .update({ current_participants: newCount })
+      .eq('id', numericOfferId)
+      .eq('current_participants', currentParticipants);
+    
+    if (updateError) {
+      console.error('Update error:', updateError);
+      throw updateError;
     }
 
     const { data: participation, error: joinError } = await supabase
       .from('group_participants')
       .insert({
-        group_offer_id: offerId,
+        group_offer_id: numericOfferId,
         user_id: userId,
         joined_at: new Date().toISOString()
       })
@@ -274,43 +278,26 @@ app.post("/api/group-purchases/:offerId/join", authenticate, async (req, res) =>
     if (joinError) {
       console.error('Join error:', joinError);
       
+      await supabase
+        .from('group_offers')
+        .update({ current_participants: currentParticipants })
+        .eq('id', numericOfferId);
+      
       if (joinError.code === '23505') {
         return res.status(400).json({ message: "You have already joined this group purchase" });
-      }
-      if (joinError.code === '23503') {
-        return res.status(400).json({ message: "Invalid offer or user ID" });
-      }
-      if (joinError.code === '42501') {
-        return res.status(403).json({ message: "Permission denied. Check RLS policies." });
       }
       
       throw joinError;
     }
-
-    const newCount = currentParticipants + 1;
-
-    const { data: updatedOffer, error: updateError } = await supabase
-      .from('group_offers')
-      .update({ 
-        current_participants: newCount
-      })
-      .eq('id', offerId)
-      .select('current_participants')
-      .maybeSingle();
-    
-    if (updateError) {
-      console.error('Update error:', updateError);      
-      throw updateError;
-    }
     
     res.json({
       success: true,
-      message: "Successfully joined the group purchase",
-      participation,
-      current_participants: updatedOffer.current_participants
+      message: "Successfully joined",
+      current_participants: newCount
     });
     
-  } catch (error) {    
+  } catch (error) {
+    console.error('Join error:', error);
     res.status(500).json({ 
       message: "Internal server error",
       details: error.message 
