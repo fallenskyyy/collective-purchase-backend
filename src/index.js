@@ -175,14 +175,14 @@ app.post("/auth/logout", async (req, res) => {
     
     res.clearCookie("refreshToken", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? "strict" : "lax",
+      secure: true,
+      sameSite: 'none',
     });
     
     res.clearCookie("accessToken", {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? "strict" : "lax",
+      secure: true,
+      sameSite: 'none',
     });
     
     const { error } = await supabase.auth.signOut();
